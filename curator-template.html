@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rule Curator</title>
+<style>
+  :root {
+    --bg: #0b1424;
+    --card: #15233b;
+    --card-soft: #1c2e4a;
+    --ink: #e6ecf5;
+    --muted: #8aa1c1;
+    --line: #243a5e;
+    --keep: #34d399;
+    --drop: #f87171;
+    --modify: #fbbf24;
+    --accent: #60a5fa;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 6px 18px rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); padding: 16px 24px; }
+  header h1 { margin: 0 0 8px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  .meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 12px; cursor: pointer; user-select: none; }
+  .chip.active { background: var(--accent); color: #0b1424; border-color: var(--accent); }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.85; }
+  .chip .count { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .chip.active .count { color: rgba(11,20,36,0.7); }
+  .chip { color: var(--ink); }
+  .actions { margin-left: auto; display: flex; gap: 8px; }
+  button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  button:hover { background: var(--card-soft); }
+  button.primary { background: var(--accent); color: #0b1424; border-color: var(--accent); font-weight: 600; }
+  button.primary:hover { background: #93c5fd; }
+  .stats { display: flex; gap: 16px; padding: 12px 24px; background: var(--card); border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .stats b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  main { padding: 16px 24px 96px; max-width: 980px; margin: 0 auto; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card.decided-keep { border-left: 3px solid var(--keep); }
+  .card.decided-drop { border-left: 3px solid var(--drop); opacity: 0.6; }
+  .card.decided-modify { border-left: 3px solid var(--modify); }
+  .card-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+  .id { font: 11px/1 ui-monospace, "SF Mono", Menlo, monospace; padding: 3px 6px; background: var(--card-soft); border-radius: 4px; color: var(--muted); }
+  .cat { font-size: 11px; padding: 3px 8px; border-radius: 4px; color: #fff; font-weight: 500; }
+  .title { font-weight: 600; font-size: 15px; flex: 1; }
+  .summary { color: var(--ink); margin: 6px 0; }
+  .why { color: var(--muted); font-size: 12px; font-style: italic; margin: 4px 0; }
+  .src { font: 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); margin-top: 6px; }
+  .impact { margin-top: 10px; padding: 10px 12px; background: rgba(96,165,250,0.08); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px; color: var(--ink); }
+  .impact .label { display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .audit-note { margin-top: 10px; padding: 10px 12px; background: rgba(251,191,36,0.08); border-left: 3px solid var(--modify); border-radius: 4px; font-size: 13px; color: var(--ink); }
+  .audit-note .label { display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--modify); margin-bottom: 4px; }
+  .decision { margin-top: 12px; display: flex; gap: 4px; }
+  .decision label { padding: 6px 14px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font-size: 13px; user-select: none; }
+  .decision input { display: none; }
+  .decision label { color: var(--ink); background: var(--card-soft); }
+  .decision label:hover { background: #243a5e; }
+  .decision label.keep:has(input:checked) { background: var(--keep); border-color: var(--keep); color: #0b1424; font-weight: 600; }
+  .decision label.drop:has(input:checked) { background: var(--drop); border-color: var(--drop); color: #0b1424; font-weight: 600; }
+  .decision label.modify:has(input:checked) { background: var(--modify); border-color: var(--modify); color: #0b1424; font-weight: 600; }
+  .modify-box { margin-top: 10px; display: none; }
+  .card.decided-modify .modify-box { display: block; }
+  textarea { width: 100%; min-height: 60px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; resize: vertical; background: var(--card-soft); color: var(--ink); }
+  textarea:focus, .notes input:focus { outline: none; border-color: var(--accent); }
+  .notes { margin-top: 8px; }
+  .notes input { width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: var(--card-soft); color: var(--ink); }
+  .notes input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.7; }
+  .empty { color: var(--muted); text-align: center; padding: 40px; }
+  footer { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--line); padding: 10px 24px; display: flex; gap: 12px; align-items: center; font-size: 12px; color: var(--muted); }
+  footer b { color: var(--ink); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Rule Curator</h1>
+  <div class="meta" id="meta">Loading…</div>
+  <div class="toolbar" id="chips"></div>
+</header>
+<div class="stats" id="stats"></div>
+<main id="list"></main>
+<footer>
+  <span>Decisions auto-save to this browser (per audit)</span>
+  <span style="margin-left:auto">
+    <button id="loadFile">Load rules.json…</button>
+    <button id="exportJson">Export JSON</button>
+    <button id="exportMd" class="primary">Export markdown</button>
+    <button id="reset">Reset</button>
+  </span>
+</footer>
+<input type="file" id="fileInput" accept="application/json" style="display:none">
+
+<script id="bootstrap-data" type="application/json">
+__RULE_CURATOR_DATA__
+</script>
+
+<script>
+let DATA = null;
+let DECISIONS = {};
+let activeFilters = new Set();
+
+// Decisions are namespaced per audit so two different generated files opened in
+// the same browser don't overwrite each other's keep/drop/modify state.
+function datasetKey() {
+  const id = (DATA && DATA.meta && (DATA.meta.buildId || DATA.meta.title)) || 'default';
+  return 'rule-curator:decisions:' + id;
+}
+
+function init() {
+  const inlineEl = document.getElementById('bootstrap-data');
+  const inlineText = inlineEl && inlineEl.textContent.trim();
+  if (inlineText) {
+    try { DATA = JSON.parse(inlineText); } catch (e) { DATA = null; }
+  }
+  if (!DATA) {
+    document.getElementById('meta').textContent =
+      'No data embedded. Use "Load rules.json…" to pick a file, or rebuild with build_curator.py.';
+    return;
+  }
+  DECISIONS = JSON.parse(localStorage.getItem(datasetKey()) || '{}');
+  render();
+}
+
+function render() {
+  document.getElementById('meta').innerHTML =
+    '<b>' + escape(DATA.meta.title || 'Rule audit') + '</b>' +
+    (DATA.meta.generated ? ' · generated ' + escape(DATA.meta.generated) : '') +
+    (DATA.meta.sources && DATA.meta.sources.length
+      ? ' · sources: ' + DATA.meta.sources.map(s => '<code>' + escape(s) + '</code>').join(', ')
+      : '');
+
+  const chipBox = document.getElementById('chips');
+  chipBox.innerHTML = '';
+  chipBox.appendChild(makeChip('all', 'All', DATA.rules.length, '#1d1d1f'));
+  (DATA.categories || []).forEach(cat => {
+    const count = DATA.rules.filter(r => r.category === cat.id).length;
+    chipBox.appendChild(makeChip(cat.id, cat.label, count, cat.color));
+  });
+  updateChipActive();
+
+  renderList();
+  renderStats();
+}
+
+function makeChip(id, label, count, color) {
+  const el = document.createElement('div');
+  el.className = 'chip';
+  el.dataset.id = id;
+  el.innerHTML = '<span class="dot" style="background:' + color + '"></span>' +
+    escape(label) + ' <span class="count">' + count + '</span>';
+  el.addEventListener('click', () => {
+    if (id === 'all') {
+      activeFilters.clear();
+    } else {
+      if (activeFilters.has(id)) activeFilters.delete(id);
+      else activeFilters.add(id);
+    }
+    updateChipActive();
+    renderList();
+  });
+  return el;
+}
+
+function updateChipActive() {
+  document.querySelectorAll('.chip').forEach(c => {
+    const id = c.dataset.id;
+    const isActive = (id === 'all' && activeFilters.size === 0) || activeFilters.has(id);
+    c.classList.toggle('active', isActive);
+  });
+}
+
+function renderList() {
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  const visible = DATA.rules.filter(r => activeFilters.size === 0 || activeFilters.has(r.category));
+  if (visible.length === 0) {
+    list.innerHTML = '<div class="empty">No rules match the active filter.</div>';
+    return;
+  }
+  visible.forEach(rule => list.appendChild(renderCard(rule)));
+}
+
+function renderCard(rule) {
+  const cat = (DATA.categories || []).find(c => c.id === rule.category) || { color: '#34495e', label: rule.category || '' };
+  const decision = DECISIONS[rule.id] || { verdict: '', modifiedText: '', notes: '' };
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  if (decision.verdict) card.classList.add('decided-' + decision.verdict);
+
+  card.innerHTML =
+    '<div class="card-head">' +
+      '<span class="id">' + escape(rule.id) + '</span>' +
+      '<span class="cat" style="background:' + cat.color + '">' + escape(cat.label) + '</span>' +
+      '<span class="title">' + escape(rule.title) + '</span>' +
+    '</div>' +
+    '<div class="summary">' + escape(rule.summary) + '</div>' +
+    (rule.why ? '<div class="why">Why: ' + escape(rule.why) + '</div>' : '') +
+    '<div class="src">' + escape(rule.source) + '</div>' +
+    (rule.agentImpact ? '<div class="impact"><span class="label">In practice (agent view)</span>' + escape(rule.agentImpact) + '</div>' : '') +
+    (rule.auditNote ? '<div class="audit-note"><span class="label">Audit note</span>' + escape(rule.auditNote) + '</div>' : '') +
+    '<div class="decision">' +
+      '<label class="keep"><input type="radio" name="d-' + rule.id + '" value="keep" ' + (decision.verdict === 'keep' ? 'checked' : '') + '> Keep</label>' +
+      '<label class="drop"><input type="radio" name="d-' + rule.id + '" value="drop" ' + (decision.verdict === 'drop' ? 'checked' : '') + '> Drop</label>' +
+      '<label class="modify"><input type="radio" name="d-' + rule.id + '" value="modify" ' + (decision.verdict === 'modify' ? 'checked' : '') + '> Modify</label>' +
+    '</div>' +
+    '<div class="modify-box">' +
+      '<textarea placeholder="Proposed replacement text…">' + escape(decision.modifiedText) + '</textarea>' +
+    '</div>' +
+    '<div class="notes">' +
+      '<input type="text" placeholder="Notes (optional)…" value="' + escape(decision.notes) + '">' +
+    '</div>';
+
+  card.querySelectorAll('input[type=radio]').forEach(r => {
+    r.addEventListener('change', e => {
+      DECISIONS[rule.id] = DECISIONS[rule.id] || {};
+      DECISIONS[rule.id].verdict = e.target.value;
+      persist();
+      card.className = 'card decided-' + e.target.value;
+      renderStats();
+    });
+  });
+  card.querySelector('textarea').addEventListener('input', e => {
+    DECISIONS[rule.id] = DECISIONS[rule.id] || {};
+    DECISIONS[rule.id].modifiedText = e.target.value;
+    persist();
+  });
+  card.querySelector('.notes input').addEventListener('input', e => {
+    DECISIONS[rule.id] = DECISIONS[rule.id] || {};
+    DECISIONS[rule.id].notes = e.target.value;
+    persist();
+  });
+
+  return card;
+}
+
+function renderStats() {
+  const total = DATA.rules.length;
+  let k = 0, d = 0, m = 0;
+  for (const id in DECISIONS) {
+    const v = DECISIONS[id].verdict;
+    if (v === 'keep') k++;
+    else if (v === 'drop') d++;
+    else if (v === 'modify') m++;
+  }
+  const undecided = total - (k + d + m);
+  document.getElementById('stats').innerHTML =
+    '<span><b>' + total + '</b> rules</span>' +
+    '<span style="color:var(--keep)"><b>' + k + '</b> keep</span>' +
+    '<span style="color:var(--drop)"><b>' + d + '</b> drop</span>' +
+    '<span style="color:var(--modify)"><b>' + m + '</b> modify</span>' +
+    '<span><b>' + undecided + '</b> undecided</span>';
+}
+
+function persist() {
+  localStorage.setItem(datasetKey(), JSON.stringify(DECISIONS));
+}
+
+function escape(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function download(filename, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('exportJson').addEventListener('click', () => {
+  const payload = {
+    meta: Object.assign({}, DATA.meta, { exported: new Date().toISOString() }),
+    decisions: DATA.rules.map(r => ({
+      id: r.id,
+      category: r.category,
+      title: r.title,
+      original: r.summary,
+      source: r.source,
+      verdict: (DECISIONS[r.id] && DECISIONS[r.id].verdict) || 'undecided',
+      modifiedText: (DECISIONS[r.id] && DECISIONS[r.id].modifiedText) || '',
+      notes: (DECISIONS[r.id] && DECISIONS[r.id].notes) || ''
+    }))
+  };
+  download('decisions-' + ymd() + '.json', JSON.stringify(payload, null, 2), 'application/json');
+});
+
+document.getElementById('exportMd').addEventListener('click', () => {
+  const lines = ['# Rule audit decisions', '_' + (DATA.meta.title || '') + ' — exported ' + new Date().toISOString().slice(0, 10) + '_', ''];
+  for (const verdict of ['drop', 'modify', 'keep', 'undecided']) {
+    const matches = DATA.rules.filter(r => ((DECISIONS[r.id] && DECISIONS[r.id].verdict) || 'undecided') === verdict);
+    if (!matches.length) continue;
+    lines.push('## ' + verdict.toUpperCase() + ' (' + matches.length + ')', '');
+    for (const r of matches) {
+      const dec = DECISIONS[r.id] || {};
+      lines.push('### ' + r.id + ' — ' + r.title);
+      lines.push('- **Source:** `' + r.source + '`');
+      lines.push('- **Original:** ' + r.summary);
+      if (r.agentImpact) lines.push('- **In practice (agent view):** ' + r.agentImpact);
+      if (r.auditNote) lines.push('- **Audit note:** ' + r.auditNote);
+      if (verdict === 'modify' && dec.modifiedText) lines.push('- **Proposed:** ' + dec.modifiedText);
+      if (dec.notes) lines.push('- **Your notes:** ' + dec.notes);
+      lines.push('');
+    }
+  }
+  download('decisions-' + ymd() + '.md', lines.join('\n'), 'text/markdown');
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  if (!confirm('Clear all decisions for this audit? This cannot be undone.')) return;
+  DECISIONS = {};
+  persist();
+  render();
+});
+
+document.getElementById('loadFile').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  try {
+    DATA = JSON.parse(text);
+    DECISIONS = JSON.parse(localStorage.getItem(datasetKey()) || '{}');
+    activeFilters.clear();
+    render();
+  } catch (err) {
+    alert('Invalid JSON: ' + err.message);
+  }
+});
+
+function ymd() { return new Date().toISOString().slice(0, 10); }
+
+init();
+</script>
+</body>
+</html>
