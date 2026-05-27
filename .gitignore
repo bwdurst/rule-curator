@@ -1,0 +1,12 @@
+# Generated at runtime by the skill / build script
+rules.json
+rule-curator.html
+decisions-*.json
+decisions-*.md
+
+# Test scratch
+_smoke*
+
+# Python
+__pycache__/
+*.pyc

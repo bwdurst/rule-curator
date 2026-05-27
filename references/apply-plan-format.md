@@ -38,6 +38,11 @@ The curation UI exports one decision per rule:
 - **undecided** — skip; list under "needs a decision" so the human knows it was
   not applied.
 
+**Orphaned structure.** When dropping a rule empties the structure around it (a
+section heading whose last rule you just removed, a now-empty list), remove that
+orphaned structure in the same edit. Remove only the orphan your own drop
+created; leave unrelated nearby structure alone.
+
 ## Drift and staleness handling
 
 Compute every edit against the **current** contents of the source files at apply
