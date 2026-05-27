@@ -46,11 +46,14 @@ bundled script.
 
 ```
 1. Discover   (agent)   detect existing rule sources; enumerate skills + ADRs
+   >>> SCOPE GATE (confirm/narrow/expand sources + audit emphasis; default = all + full)
 2. Extract    (agent)   parse prose into a normalized rule list -> rules.json
 3. Analyze    (agent)   per-rule outputs, judged against the whole corpus
+   >>> PRE-CURATE CHECKPOINT (informational: "found N, flagged K"; chance to re-scope)
 4. Build UI   (script)  build_curator.py: rules.json + template -> one HTML file
 5. Curate     (human)   keep/drop/modify in browser; export decisions.json
 6. Apply-plan (agent)   decisions.json -> auditable markdown apply-plan
+   >>> APPLY GATE (single confirmation: "apply these N edits?")
 7. Execute    (gated)   on confirmation, make the edits
 ```
 
@@ -170,6 +173,35 @@ Offer to apply the plan behind a single confirmation ("apply these N edits?").
 On confirmation, make the edits. Recommend committing first where a git repo
 exists, so the apply lands as a reviewable diff. This is a lightweight
 confirm-then-edit, not the heavyweight executing-plans path.
+
+## User interaction gates
+
+Two purposeful gates plus one soft checkpoint. Gates are a tax too, so the skill
+adds only the ones that change the outcome, and every gate is confirm-with-defaults
+so the skill still runs when no human is steering it (e.g. inside an autonomous
+agent).
+
+- **Scope gate (after Discover, before Analyze) — required, defaults to proceed.**
+  Present the discovered sources and a rough rule count, then offer to confirm,
+  narrow, or expand the source set, plus an optional emphasis ("general health
+  audit" vs "hunting something specific: duplicates / staleness / bloat"). This
+  is the most valuable gate because Analyze is the expensive phase; narrowing
+  here avoids analyzing out-of-scope rules and sharpens output. It also serves
+  as the "revise / expand" checkpoint. **Default if the user just says go:** all
+  discovered sources, full audit.
+
+- **Pre-curate checkpoint (after Analyze, before Build UI) — informational, not
+  blocking.** Report "analyzed N rules, flagged K (breakdown by audit category)"
+  and proceed to build. Offers a last chance to re-scope if the result is
+  obviously off, but does not stop the flow waiting for input.
+
+- **Apply gate (before Execute) — required confirmation.** Single confirmation
+  ("apply these N edits?"); recommend committing first where a git repo exists.
+
+**Non-interactive degradation:** when run without a human in the loop, the scope
+gate takes its default (all sources, full audit) and the apply gate is the one
+place the skill stops, since writing back to source-of-truth files should never
+happen unattended.
 
 ## Error handling / edge cases
 
