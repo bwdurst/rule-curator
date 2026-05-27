@@ -25,18 +25,22 @@ The curation UI exports one decision per rule:
 }
 ```
 
-`verdict` is `keep`, `drop`, `modify`, or `undecided`.
+`verdict` is `reviewed`, `drop`, `modify`, or `unreviewed`. Keep is the default
+outcome: only `drop` and `modify` change files.
 
 ## Per-verdict edits
 
-- **keep** — no-op. Do not touch the file.
+- **reviewed** — no-op. The human examined the rule and kept it. Do not touch the file.
+- **unreviewed** — no-op. Kept by default (not examined). Do not touch the file,
+  but report the count of unreviewed rules so the human knows what was left
+  unexamined.
 - **drop** — remove the rule from its source. For a memory entry, this means
   **both** deleting the entry file **and** removing its pointer line in
   `MEMORY.md`. One change set, both halves; a dangling pointer is a broken state.
 - **modify** — replace the rule's text with `modifiedText`. If `modifiedText` is
   empty for a modify verdict, flag it and skip rather than guess the rewrite.
-- **undecided** — skip; list under "needs a decision" so the human knows it was
-  not applied.
+
+Treat any verdict that is not `drop` or `modify` as a no-op keep.
 
 **Orphaned structure.** When dropping a rule empties the structure around it (a
 section heading whose last rule you just removed, a now-empty list), remove that
@@ -85,7 +89,9 @@ review it as a diff:
 
 ## Skipped (M)
 - D4 (drifted: file text no longer matches the curated original)
-- N2 (undecided)
+
+## Not reviewed (K) — kept unchanged
+- 12 rules were left unreviewed and remain as-is.
 ```
 
 ## The apply gate and execution

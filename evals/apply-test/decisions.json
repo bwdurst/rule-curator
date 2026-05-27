@@ -18,7 +18,7 @@
       "modifiedText": "", "notes": "misfiled; remove for now"
     },
     {
-      "id": "C8", "source": "CLAUDE.md", "verdict": "keep",
+      "id": "C8", "source": "CLAUDE.md", "verdict": "reviewed",
       "original": "Every database migration must be reversible: include a working downgrade().",
       "modifiedText": "", "notes": ""
     },

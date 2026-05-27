@@ -149,8 +149,11 @@ file. The user double-clicks it; decisions persist locally; it exports
 
 ### 7. Curate (human)
 
-The human sets keep / drop / modify per rule in the browser, with optional
-replacement text and notes, then exports `decisions.json`.
+Per rule, the human marks **Reviewed**, **Drop**, or **Modify** (with optional
+replacement text and notes), then exports `decisions.json`. Keep is the default:
+a rule left untouched stays unchanged. "Reviewed" records that the human looked
+at it and kept it (so an untouched rule reads as not-yet-examined, not as an
+implicit decision). Only Drop and Modify change files.
 
 ### 8-9. Apply-plan and apply gate
 

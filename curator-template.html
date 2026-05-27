@@ -39,7 +39,7 @@
   .stats b { color: var(--ink); font-variant-numeric: tabular-nums; }
   main { padding: 16px 24px 96px; max-width: 980px; margin: 0 auto; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
-  .card.decided-keep { border-left: 3px solid var(--keep); }
+  .card.decided-reviewed { border-left: 3px solid var(--keep); }
   .card.decided-drop { border-left: 3px solid var(--drop); opacity: 0.6; }
   .card.decided-modify { border-left: 3px solid var(--modify); }
   .card-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
@@ -58,9 +58,9 @@
   .decision input { display: none; }
   .decision label { color: var(--ink); background: var(--card-soft); }
   .decision label:hover { background: #243a5e; }
-  .decision label.keep:has(input:checked) { background: var(--keep); border-color: var(--keep); color: #0b1424; font-weight: 600; }
-  .decision label.drop:has(input:checked) { background: var(--drop); border-color: var(--drop); color: #0b1424; font-weight: 600; }
-  .decision label.modify:has(input:checked) { background: var(--modify); border-color: var(--modify); color: #0b1424; font-weight: 600; }
+  .decision label.reviewed:has(input:checked) { background: #2bf09a; border-color: #2bf09a; color: #06231a; font-weight: 700; box-shadow: 0 0 0 1px #2bf09a, 0 0 14px rgba(43,240,154,0.65); }
+  .decision label.drop:has(input:checked) { background: var(--drop); border-color: var(--drop); color: #0b1424; font-weight: 700; box-shadow: 0 0 0 1px var(--drop), 0 0 12px rgba(248,113,113,0.55); }
+  .decision label.modify:has(input:checked) { background: var(--modify); border-color: var(--modify); color: #0b1424; font-weight: 700; box-shadow: 0 0 0 1px var(--modify), 0 0 12px rgba(251,191,36,0.55); }
   .modify-box { margin-top: 10px; display: none; }
   .card.decided-modify .modify-box { display: block; }
   textarea { width: 100%; min-height: 60px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; resize: vertical; background: var(--card-soft); color: var(--ink); }
@@ -102,7 +102,7 @@ let DECISIONS = {};
 let activeFilters = new Set();
 
 // Decisions are namespaced per audit so two different generated files opened in
-// the same browser don't overwrite each other's keep/drop/modify state.
+// the same browser don't overwrite each other's reviewed/drop/modify state.
 function datasetKey() {
   const id = (DATA && DATA.meta && (DATA.meta.buildId || DATA.meta.title)) || 'default';
   return 'rule-curator:decisions:' + id;
@@ -202,7 +202,7 @@ function renderCard(rule) {
     (rule.agentImpact ? '<div class="impact"><span class="label">In practice (agent view)</span>' + escape(rule.agentImpact) + '</div>' : '') +
     (rule.auditNote ? '<div class="audit-note"><span class="label">Audit note</span>' + escape(rule.auditNote) + '</div>' : '') +
     '<div class="decision">' +
-      '<label class="keep"><input type="radio" name="d-' + rule.id + '" value="keep" ' + (decision.verdict === 'keep' ? 'checked' : '') + '> Keep</label>' +
+      '<label class="reviewed"><input type="radio" name="d-' + rule.id + '" value="reviewed" ' + (decision.verdict === 'reviewed' ? 'checked' : '') + '> Reviewed</label>' +
       '<label class="drop"><input type="radio" name="d-' + rule.id + '" value="drop" ' + (decision.verdict === 'drop' ? 'checked' : '') + '> Drop</label>' +
       '<label class="modify"><input type="radio" name="d-' + rule.id + '" value="modify" ' + (decision.verdict === 'modify' ? 'checked' : '') + '> Modify</label>' +
     '</div>' +
@@ -241,17 +241,17 @@ function renderStats() {
   let k = 0, d = 0, m = 0;
   for (const id in DECISIONS) {
     const v = DECISIONS[id].verdict;
-    if (v === 'keep') k++;
+    if (v === 'reviewed') k++;
     else if (v === 'drop') d++;
     else if (v === 'modify') m++;
   }
-  const undecided = total - (k + d + m);
+  const unreviewed = total - (k + d + m);
   document.getElementById('stats').innerHTML =
     '<span><b>' + total + '</b> rules</span>' +
-    '<span style="color:var(--keep)"><b>' + k + '</b> keep</span>' +
+    '<span style="color:var(--keep)"><b>' + k + '</b> reviewed</span>' +
     '<span style="color:var(--drop)"><b>' + d + '</b> drop</span>' +
     '<span style="color:var(--modify)"><b>' + m + '</b> modify</span>' +
-    '<span><b>' + undecided + '</b> undecided</span>';
+    '<span><b>' + unreviewed + '</b> unreviewed</span>';
 }
 
 function persist() {
@@ -281,7 +281,7 @@ document.getElementById('exportJson').addEventListener('click', () => {
       title: r.title,
       original: r.summary,
       source: r.source,
-      verdict: (DECISIONS[r.id] && DECISIONS[r.id].verdict) || 'undecided',
+      verdict: (DECISIONS[r.id] && DECISIONS[r.id].verdict) || 'unreviewed',
       modifiedText: (DECISIONS[r.id] && DECISIONS[r.id].modifiedText) || '',
       notes: (DECISIONS[r.id] && DECISIONS[r.id].notes) || ''
     }))
@@ -291,8 +291,8 @@ document.getElementById('exportJson').addEventListener('click', () => {
 
 document.getElementById('exportMd').addEventListener('click', () => {
   const lines = ['# Rule audit decisions', '_' + (DATA.meta.title || '') + ' — exported ' + new Date().toISOString().slice(0, 10) + '_', ''];
-  for (const verdict of ['drop', 'modify', 'keep', 'undecided']) {
-    const matches = DATA.rules.filter(r => ((DECISIONS[r.id] && DECISIONS[r.id].verdict) || 'undecided') === verdict);
+  for (const verdict of ['drop', 'modify', 'reviewed', 'unreviewed']) {
+    const matches = DATA.rules.filter(r => ((DECISIONS[r.id] && DECISIONS[r.id].verdict) || 'unreviewed') === verdict);
     if (!matches.length) continue;
     lines.push('## ' + verdict.toUpperCase() + ' (' + matches.length + ')', '');
     for (const r of matches) {

@@ -51,7 +51,7 @@ bundled script.
 3. Analyze    (agent)   per-rule outputs, judged against the whole corpus
    >>> PRE-CURATE CHECKPOINT (informational: "found N, flagged K"; chance to re-scope)
 4. Build UI   (script)  build_curator.py: rules.json + template -> one HTML file
-5. Curate     (human)   keep/drop/modify in browser; export decisions.json
+5. Curate     (human)   reviewed/drop/modify in browser (keep=default); export decisions.json
 6. Apply-plan (agent)   decisions.json -> auditable markdown apply-plan
    >>> APPLY GATE (single confirmation: "apply these N edits?")
 7. Execute    (gated)   on confirmation, make the edits
@@ -167,16 +167,20 @@ the page.
 
 ### 5. Curate (human)
 
-Keep / drop / modify per rule, optional proposed replacement text and notes.
-Export `decisions.json`.
+Per rule, mark Reviewed, Drop, or Modify (with optional replacement text and
+notes), then export `decisions.json`. Keep is the default: a rule left untouched
+stays unchanged. "Reviewed" records an explicit looked-at-and-kept, so an
+untouched rule reads as not-yet-examined rather than an implicit decision. Only
+Drop and Modify change files.
 
 ### 6. Apply-plan (agent)
 
 Read `decisions.json` and produce an auditable markdown apply-plan: for every
-non-keep verdict, the file, the exact before, and the exact after.
+drop/modify verdict, the file, the exact before, and the exact after.
 
 Per-verdict edits:
-- `keep` → no-op
+- `reviewed` / `unreviewed` → no-op (kept). Report the unreviewed count so the
+  human knows what was left unexamined.
 - `drop` → remove the rule. For a memory entry this means delete the entry file
   *and* remove its pointer line in `MEMORY.md` (both halves, one change set).
 - `modify` → replace the rule text with the approved replacement.
