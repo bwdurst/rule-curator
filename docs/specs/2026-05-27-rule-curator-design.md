@@ -237,6 +237,33 @@ happen unattended.
   to rubber-stamp.
 - **REFACTOR:** close whatever rationalizations surface; re-test until solid.
 
+At least three distinct evaluation scenarios (not one rule set), e.g. a global
+CLAUDE.md with duplication, a memory dir with a misfiled/stale entry, and a
+project with an ADR-derived rule that conflicts with a CLAUDE.md rule. Test
+across the models the skill will realistically run under (Haiku / Sonnet / Opus):
+Haiku reveals whether guidance is sufficient, Opus whether it over-explains.
+
+## Authoring conformance (Anthropic skill best-practices)
+
+Build constraints carried over from Anthropic's official skill-authoring guide:
+
+- **`build_curator.py` is standard-library only.** No third-party packages, so it
+  runs in any skill environment (the Anthropic API environment has no network or
+  package install). Handle errors in the script rather than punting; justify any
+  constants.
+- **Ship the template de-personalized.** `curator-template.html` carries empty or
+  clearly-marked example bootstrap data, never a real rule set, and no
+  hardcoded generation date (avoid time-sensitive content).
+- **Forward-slash paths only** in SKILL.md, references, and scripts, even though
+  authoring happens on Windows.
+- **`references/analysis-contract.md` opens with a table of contents** (reference
+  files over ~100 lines need one so partial reads still see full scope).
+- **References stay one level deep** from SKILL.md; no reference file links to
+  another reference file.
+- **Naming:** `name` frontmatter = "Rule Curator" (noun phrase). The guide
+  recommends gerund form but lists noun phrases as an accepted alternative; the
+  noun is a deliberate choice for a collision-free public brand.
+
 ## Build location
 
 Standalone git repo at `c:\Projects\rule-curator\`, laid out as the skill dir
