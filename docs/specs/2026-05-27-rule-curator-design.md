@@ -89,17 +89,31 @@ the moment of use.
 
 ### 1. Discover (agent)
 
-Auto-detect the Claude-first sources that exist:
+**What counts as a rule.** A rule is a *standing directive that shapes the
+agent's behavior across tasks* (do / never / prefer / always / use X not Y).
+This is the inclusion test for discovery, not a hardcoded file list. A *bounded
+deliverable spec* (a PRD or feature spec defining one unit of work) is not a
+rule and is excluded by default.
+
+Auto-detect the Claude-first sources that exist and contain standing directives:
 - Global `~/.claude/CLAUDE.md`
 - Project `CLAUDE.md` (and nested ones)
 - Memory dir: `MEMORY.md` plus every entry it points to
-- Common project rule docs: `AGENTS.md`, `docs/adr/*`, `COORDINATION.md`,
-  primers, and similar
+- Common project rule docs: `AGENTS.md`, `COORDINATION.md`, primers, conventions
+- **ADR-type decision records, however named** (`docs/adr/*`, `docs/decisions/*`,
+  RFCs, design-decision docs). Decisions routinely encode durable constraints
+  that function as rules. Extract only the **binding constraint** from an ADR,
+  not the whole narrative (context / consequences sections are not rules).
 
-Also enumerate installed skills (names + descriptions) and scan for ADRs, so
-"duplicates a skill / duplicates an ADR" findings in Analyze are grounded in
-reality, not guessed. The user may name extra sources. If nothing is found,
-report and stop; never fabricate a rule set.
+**Excluded by default:** PRDs and feature specs. They are bounded deliverable
+definitions, not standing rules; sweeping them in floods the audit with
+requirements miscast as rules and risks recommending edits to product specs. A
+user may add them for a given run via the scope gate.
+
+Also enumerate installed skills (names + descriptions) and the ADRs found above,
+so "duplicates a skill / duplicates an ADR" findings in Analyze are grounded in
+reality, not guessed. The user may name extra sources at the scope gate. If
+nothing is found, report and stop; never fabricate a rule set.
 
 ### 2. Extract (agent)
 
