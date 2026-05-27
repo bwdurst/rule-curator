@@ -1,0 +1,3 @@
+- [PR description template](feedback_pr_template.md) — standard format for every PR description
+- [Prefer pnpm for package operations](feedback_prefer_pnpm.md) — use pnpm, not npm, for installs and scripts
+- [Streak math is timezone-sensitive](domain_streak_timezone.md) — compute streak rollover in the user's local tz, not UTC
