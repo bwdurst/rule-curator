@@ -1,5 +1,5 @@
 ---
-name: Rule Curator
+name: rule-curator
 description: Use when reviewing, auditing, pruning, or cleaning up the behavioral rules an agent operates under (global/project CLAUDE.md, memory entries, project rule docs like AGENTS.md, ADRs, COORDINATION) to decide which rules to keep, drop, or rewrite, and to apply those decisions.
 ---
 
