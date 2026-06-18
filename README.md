@@ -41,9 +41,14 @@ staleness on healthy rules.
 
 ## Install
 
-Copy this directory into your Claude Code skills location, for example
-`~/.claude/skills/rule-curator/`, or add it through a plugin marketplace. Once
-installed, invoke it by asking to audit, prune, or clean up your rules.
+Clone into your Claude Code skills directory:
+
+```bash
+git clone https://github.com/bwdurst/rule-curator.git ~/.claude/skills/rule-curator
+```
+
+(or copy the folder there manually). Once installed, invoke it by asking to
+audit, prune, or clean up your rules, or run `/rule-curator`.
 
 ## Build the curation UI directly
 
