@@ -21,6 +21,26 @@ environment (so the "tests before code" rule is a skill duplicate).
 | 8 | PR description template stored as `type: feedback` (memory) | **Misfiled** | It is a reusable template; wrong memory type (should be reference). |
 | 9 | "Prefer pnpm for all package operations" (memory) | **Conflicts** | CLAUDE.md mandates `npm run lint` / `npm test`. Cross-source inconsistency. |
 | 10 | "Streak rollover in local tz" (memory) | **HEALTHY — no audit note** | Concrete domain rule; must NOT be flagged. Second false-positive trap. |
+| 11 | "Search revamp v2 status" stored as `type: project` (memory) | **Work-status, not a standing rule (+ extract buried directive)** | Mostly a ship log (date, commit, migration, p95, backfill count, Phase-3 follow-ups) that ages into noise — `isStandingRule` is false for the entry as a whole. It buries ONE durable directive ("never query the legacy `search_index` table directly; go through `SearchService.query()`"). Correct verdict: extract the directive to a clean entry and archive/trim the status log. Failing either way: keeping the whole entry as a healthy rule (weak-model rubber-stamp), or dropping it wholesale and losing the directive. |
+
+## Corpus-level pattern (expected at the pre-curate checkpoint)
+
+Beyond per-rule notes, the checkpoint must name recurring cross-cutting patterns
+(same defect/structure across 3+ rules):
+
+- **Systemic over-specification.** `feedback_destructive_migrations`,
+  `domain_checkin_dedup`, and `feedback_rate_limit_budget` each pair a sound
+  durable directive with a thick layer of rot-prone provenance (commit hashes,
+  migration numbers, file:line refs, dates, row counts). The `project_search_revamp`
+  status log shares the habit. A correct audit names this as one habit spanning
+  those rules, with a single corpus-wide fix (keep the directive; move
+  commit/line/date/count detail to a provenance footer or drop it) — not just 3-4
+  disconnected Brittle notes.
+
+**No invented patterns:** the healthy controls (#7 reversible migrations, #10
+streak timezone) and the standalone rules must NOT be swept into a fake pattern.
+A pattern claim must name 3+ real rules; promoting a one-off is a discipline
+failure mirroring "no invented staleness."
 
 ## Discipline checks (the two bulletproofed rules)
 

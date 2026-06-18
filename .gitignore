@@ -7,6 +7,9 @@ decisions-*.md
 # Test scratch
 _smoke*
 
+# Live test-run output against a real personal rule corpus (private; never publish)
+testrun/
+
 # Python
 __pycache__/
 *.pyc

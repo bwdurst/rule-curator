@@ -1,6 +1,6 @@
 ---
 name: rule-curator
-description: Use when reviewing, auditing, pruning, or cleaning up the behavioral rules an agent operates under (global/project CLAUDE.md, memory entries, project rule docs like AGENTS.md, ADRs, COORDINATION) to decide which rules to keep, drop, or rewrite, and to apply those decisions.
+description: Use when auditing, pruning, or cleaning up an agent's entire existing rule set in one bulk pass across every rule source at once (all CLAUDE.md files, all memory entries, AGENTS.md, ADRs, COORDINATION). This is whole-corpus hygiene; NOT for adding, editing, or fixing an individual rule (just edit that file directly).
 ---
 
 # Rule Curator
@@ -53,7 +53,18 @@ Rule Curator progress:
 
 A **rule** is a *standing directive that shapes behavior across tasks* (do /
 never / prefer / always / use X not Y). That is the inclusion test, not a file
-list. A bounded deliverable spec (PRD, feature spec) is not a rule.
+list. A bounded deliverable spec (PRD, feature spec) is not a rule. Neither is a
+**work-status entry** — a ship log, phase tracker, or "next step" note (common in
+memory systems, often `type: project`): it is bounded work-tracking that ages
+into noise, not a standing directive.
+
+**But a work-status entry often buries one durable directive** ("never query the
+legacy table", "don't re-add X", "this finals refresh must clear the sticky
+field"). When it does, the entry as a whole is *not* a standing rule, yet the
+buried directive must survive. The correct verdict is **extract the directive to
+a clean rule entry and archive/trim the surrounding log** — neither keep the
+whole log (dead weight, and a weak model will rubber-stamp it as healthy) nor
+drop it wholesale (loses the directive).
 
 Auto-detect the sources that exist and contain standing directives:
 - Global `~/.claude/CLAUDE.md` and project `CLAUDE.md` (including nested)
@@ -132,8 +143,26 @@ in view, never each rule in isolation.
 
 ### 5. Pre-curate checkpoint (informational)
 
-Report "analyzed N rules, flagged K" with the per-category breakdown, then
-proceed. Offer a last chance to re-scope; do not block waiting for input.
+Report "analyzed N rules, flagged K" with the per-category breakdown. Then name
+any **cross-cutting patterns** — the same defect or structure recurring across
+**3+ rules**, which the per-rule notes fragment into separate line-items. Each
+pattern is one line: the habit, the rule IDs it spans, and the single fix that
+applies corpus-wide. The common ones:
+
+- **Systemic over-specification** — many rules pair a durable one-line directive
+  with rot-prone provenance (commit hashes, line numbers, counts, dates). Fix:
+  keep the directive, move provenance to a footer or drop it.
+- **Duplicate / overlap cluster** — 3+ rules covering the same territory; candidates
+  for one consolidated rule the others point to.
+- **Misfiling habit** — several entries of one type carrying another type's content.
+- **Work-status habit** — multiple logs burying standing directives.
+
+**No invented patterns.** A pattern must name 3+ real rules; a 2-rule overlap is
+already a per-rule Redundant/Conflicts note and needs no roll-up. Don't promote a
+one-off to look thorough — same discipline as "no invented staleness." If nothing
+recurs across 3+ rules, say "no cross-cutting patterns" and move on.
+
+Then proceed. Offer a last chance to re-scope; do not block waiting for input.
 
 ### 6. Build the curation UI
 
@@ -181,6 +210,8 @@ current rule to look thorough. A healthy rule gets no audit note.
 - You judged a memory entry's content but not whether its *type* fits (Misfiled).
 - You called something stale without naming what supersedes it.
 - You fused "what it does" and "what's wrong with it" into one verdict blob.
+- You marked a work-status entry (ship log / phase tracker) as a standing rule and kept it whole, instead of extracting its buried directive and archiving the log.
+- You reported the checkpoint as counts only, without checking whether the flagged rules share a cross-cutting pattern (3+ recurrence) the per-rule notes fragment.
 
 ## Common mistakes
 

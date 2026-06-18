@@ -84,6 +84,14 @@ general principle do the job more durably?
 cutting-edge." Note: *hardcoded denylist rots as language drifts; a read-aloud
 "does this sound like marketing?" test generalizes.* Specific is not the same as
 durable; a precise rule can still be brittle.
+**Also brittle — a sound directive wrapped in rot-prone provenance.** When a
+healthy one-line rule is buried under commit hashes, file:line refs, migration
+numbers, dates, or row counts, the directive is fine but the provenance rots and
+dates the entry. Flag the provenance (move it to a footer or drop it), keep the
+directive. Do not wave the entry through as "healthy" just because the directive
+is sound — the surrounding detail is the defect. This is the most common
+brittleness in a mature corpus and the per-rule seed of the "systemic
+over-specification" pattern reported at the checkpoint (step 5).
 
 ### Conflicts
 **Test:** Does another rule (in any source) instruct the opposite on the same action?
@@ -145,3 +153,24 @@ agentImpact: I send analytics writes to the v1 endpoint.
 auditNote: Stale / superseded. ADR-003 migrated analytics to v2 and v1 now
   returns 410. Following this rule produces code that hits a dead endpoint.
 ```
+
+**Work-status entry burying a directive (the routinely-rubber-stamped case):**
+A `type: project` memory entry: "Search revamp v2 shipped 2026-03-04 (commit
+a1b2c3d, migration 0042); Phase 3 next; ~14k rows backfilled, p95 38ms. Hard rule
+going forward: never query the legacy `search_index` table directly — it is being
+decommissioned; all reads go through `SearchService.query()`. Follow-ups: drop the
+table after Phase 3."
+```
+agentImpact: Not a standing rule on its own — this is work-status (a ship log with
+  a date, a commit, metrics, and follow-ups). The one durable directive inside it:
+  I read search only via SearchService.query(), never the search_index table.
+auditNote: Work-status, not a standing rule, and it ages into noise (ship date,
+  commit, p95, backfill count, and Phase-3 follow-ups all rot). It buries one
+  durable directive ("never query search_index directly; go through
+  SearchService.query()"). Extract that directive to a clean rule entry and
+  archive/trim the status log. Do NOT keep the whole entry as a rule, and do NOT
+  drop it wholesale (that loses the directive).
+```
+A weak model left to itself marks this entry `isStandingRule: true`, writes no
+audit note, and keeps it as-is — preserving a dead log forever. The directive is
+the only durable part; the log is not.
