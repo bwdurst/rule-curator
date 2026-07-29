@@ -150,7 +150,7 @@ function makeChip(id, label, count, color) {
   const el = document.createElement('div');
   el.className = 'chip';
   el.dataset.id = id;
-  el.innerHTML = '<span class="dot" style="background:' + color + '"></span>' +
+  el.innerHTML = '<span class="dot" style="background:' + escape(color) + '"></span>' +
     escape(label) + ' <span class="count">' + count + '</span>';
   el.addEventListener('click', () => {
     if (id === 'all') {
@@ -204,7 +204,7 @@ function renderCard(rule) {
   card.innerHTML =
     '<div class="card-head">' +
       '<span class="id">' + escape(rule.id) + '</span>' +
-      '<span class="cat" style="background:' + cat.color + '">' + escape(cat.label) + '</span>' +
+      '<span class="cat" style="background:' + escape(cat.color) + '">' + escape(cat.label) + '</span>' +
       '<span class="title">' + escape(rule.title) + '</span>' +
     '</div>' +
     '<div class="summary">' + escape(rule.summary) + '</div>' +
@@ -213,9 +213,9 @@ function renderCard(rule) {
     (rule.agentImpact ? '<div class="impact"><span class="label">In practice (agent view)</span>' + escape(rule.agentImpact) + '</div>' : '') +
     (rule.auditNote ? '<div class="audit-note"><span class="label">Audit note</span>' + escape(rule.auditNote) + '</div>' : '') +
     '<div class="decision">' +
-      '<label class="reviewed"><input type="radio" name="d-' + rule.id + '" value="reviewed" ' + (decision.verdict === 'reviewed' ? 'checked' : '') + '> Reviewed</label>' +
-      '<label class="drop"><input type="radio" name="d-' + rule.id + '" value="drop" ' + (decision.verdict === 'drop' ? 'checked' : '') + '> Drop</label>' +
-      '<label class="modify"><input type="radio" name="d-' + rule.id + '" value="modify" ' + (decision.verdict === 'modify' ? 'checked' : '') + '> Modify</label>' +
+      '<label class="reviewed"><input type="radio" name="d-' + escape(rule.id) + '" value="reviewed" ' + (decision.verdict === 'reviewed' ? 'checked' : '') + '> Reviewed</label>' +
+      '<label class="drop"><input type="radio" name="d-' + escape(rule.id) + '" value="drop" ' + (decision.verdict === 'drop' ? 'checked' : '') + '> Drop</label>' +
+      '<label class="modify"><input type="radio" name="d-' + escape(rule.id) + '" value="modify" ' + (decision.verdict === 'modify' ? 'checked' : '') + '> Modify</label>' +
     '</div>' +
     '<div class="modify-box">' +
       '<textarea placeholder="Proposed replacement text…">' + escape(decision.modifiedText) + '</textarea>' +

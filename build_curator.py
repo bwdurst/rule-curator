@@ -12,12 +12,19 @@ Standard library only; no third-party packages, so it runs in any environment.
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 PLACEHOLDER = "__RULE_CURATOR_DATA__"
 REQUIRED_KEYS = ("meta", "categories", "rules")
+
+# Rule ids end up in HTML attributes and localStorage keys; category colors end
+# up in style attributes. The template escapes both, but reject anything odd
+# here too so a malformed rules.json fails loudly at build time.
+ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+COLOR_RE = re.compile(r"^(#[0-9a-fA-F]{3,8}|[A-Za-z]+)$")
 
 
 def fail(message):
@@ -40,6 +47,20 @@ def load_rules(path):
         fail(f"rules JSON missing required key(s): {', '.join(missing)}")
     if not isinstance(data["rules"], list):
         fail("rules JSON 'rules' must be a list")
+    if not isinstance(data["categories"], list):
+        fail("rules JSON 'categories' must be a list")
+    seen_ids = set()
+    for rule in data["rules"]:
+        rule_id = rule.get("id") if isinstance(rule, dict) else None
+        if not isinstance(rule_id, str) or not ID_RE.fullmatch(rule_id):
+            fail(f"rule id must match [A-Za-z0-9_-]+, got: {rule_id!r}")
+        if rule_id in seen_ids:
+            fail(f"duplicate rule id: {rule_id!r}")
+        seen_ids.add(rule_id)
+    for cat in data["categories"]:
+        color = cat.get("color") if isinstance(cat, dict) else None
+        if color is not None and (not isinstance(color, str) or not COLOR_RE.fullmatch(color)):
+            fail(f"category color must be a hex literal or CSS color name, got: {color!r}")
     return data
 
 
