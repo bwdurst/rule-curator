@@ -3,49 +3,50 @@
 A skill that audits the behavioral rules an agent operates under and helps you
 keep, drop, or rewrite them.
 
-Agents accumulate rules across many files (global and project `CLAUDE.md`, a
-memory system, project docs like `AGENTS.md`, ADRs, conventions). Nobody prunes
-them, so they go stale, duplicate each other, duplicate installed skills, restate
-default behavior, or impose rituals whose friction exceeds their value. Every
-rule is a permanent tax: it costs context tokens every session and dilutes
-instruction-following attention across more directives.
+Agents accumulate rules across many files: global and project `CLAUDE.md`, a
+memory system, project docs like `AGENTS.md`, ADRs, conventions. Nobody prunes
+them. Rules go stale, contradict each other, duplicate installed skills, or
+restate things the model already does by default. Every rule also costs context
+tokens each session, and the more rules there are, the less attention each one
+gets.
 
-Rule Curator gathers those rules, analyzes each one against the whole set,
-produces a self-contained browser UI where you decide keep / drop / modify, then
-turns your decisions into an auditable apply-plan and (on confirmation) edits the
-source files.
+Rule Curator gathers the rules, analyzes each one against the whole set, and
+builds a page in your browser where you mark each rule keep, drop, or modify.
+It then turns your decisions into a reviewable edit plan and, once you confirm,
+applies the edits to the source files.
 
 ## What it does
 
-For every rule it produces two things, kept separate:
+Every rule gets two separate write-ups:
 
-1. A neutral, first-person **behavioral impact** statement (what following the
-   rule actually changes, and its cost), always present.
-2. An **audit note**, only when something is wrong, drawn from a fixed taxonomy:
-   redundant, stale or superseded, misfiled, low-yield ritual, not actionable,
-   brittle, or conflicting.
+1. A **behavioral impact** statement: what following the rule actually changes
+   about the agent's behavior, and what it costs. Every rule gets one.
+2. An **audit note**, only when something is wrong, from a fixed set of
+   categories: redundant, stale or superseded, misfiled, low-yield ritual, not
+   actionable, brittle, or conflicting.
 
-It deliberately checks the categories that capable models skip on their own
-(brittle rules, misfiled entries), and it refuses to rubber-stamp or to invent
-staleness on healthy rules.
+The skill checks the categories that audits usually skip (brittle rules,
+misfiled entries), and it does not invent problems on healthy rules to look
+thorough.
 
-Where rule sources live in git, the audit pins each contributing repo's commit
-(`meta.commits` in rules.json, shown in the UI header and embedded in both
-exports) so decisions that come back days later can be checked for drift. Where
-they don't, it says so — and warns at the apply gate that drops from an
-untracked source are unrecoverable.
+If your rule files live in git, the audit records the commit it ran against
+(`meta.commits` in rules.json, shown in the UI header and included in both
+exports). When you come back to your decisions days later, that record shows
+exactly which files changed in the meantime. If your rule files are not in git,
+the skill says so up front and warns you before applying anything that a
+deleted rule cannot be recovered.
 
 ## Repo contents
 
-- `SKILL.md` the workflow, the analysis contract, and the disciplines
-- `references/analysis-contract.md` the full rubric with worked examples
-- `references/apply-plan-format.md` the apply-plan shape and per-verdict edit rules
-- `build_curator.py` standard-library script that builds the self-contained UI
-- `curator-template.html` the UI template (data is injected at build time)
-- `evals/` the planted-issue test corpus, answer key, and RED/GREEN findings;
-  `evals/make_history.py` wraps the corpus in a deterministic git history for
-  the version-history cases (H1–H6, not yet run)
-- `docs/specs/` the design spec
+- `SKILL.md` — the workflow, the analysis contract, and the disciplines
+- `references/analysis-contract.md` — the full rubric with worked examples
+- `references/apply-plan-format.md` — the edit-plan format and per-verdict rules
+- `build_curator.py` — standard-library script that builds the self-contained UI
+- `curator-template.html` — the UI template (data is injected at build time)
+- `evals/` — a synthetic test corpus with planted issues, its answer key, and
+  recorded test runs; `evals/make_history.py` rebuilds the corpus with a
+  reproducible git history for the version-history test cases (not yet run)
+- `docs/specs/` — the design spec
 
 ## Install
 
@@ -55,14 +56,14 @@ Clone into your Claude Code skills directory:
 git clone https://github.com/bwdurst/rule-curator.git ~/.claude/skills/rule-curator
 ```
 
-(or copy the folder there manually). Once installed, invoke it by asking to
-audit, prune, or clean up your rules, or run `/rule-curator`.
+or copy the folder there manually. Then ask Claude to audit, prune, or clean up
+your rules, or run `/rule-curator`.
 
-**Before your first audit:** put your rule sources under version control if
-they aren't already — a `git init` in your memory directory is enough. Tracked
-sources get pinned audits, exact drift detection, and revertable drops;
-untracked sources get a warning at the apply gate that drops are unrecoverable,
-which is a worse time to find out.
+One thing worth doing first: if your rule files are not under version control,
+run `git init` in the directory that holds them (your memory directory, for
+example). With history, the audit can pin exact commits, detect edits made
+while you were deciding, and revert a bad prune. Without it, a deleted rule is
+gone for good.
 
 ## Build the curation UI directly
 
