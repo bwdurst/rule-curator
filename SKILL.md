@@ -122,7 +122,8 @@ Normalize each rule into the schema `build_curator.py` consumes:
       "id": "G1", "category": "global-claudemd",
       "title": "short title", "summary": "one-line plain-English statement",
       "source": "path:line", "why": "optional origin",
-      "agentImpact": "see step 4", "auditNote": "see step 4 (omit if healthy)"
+      "agentImpact": "see step 4", "auditNote": "see step 4 (omit if healthy)",
+      "auditCategory": "see step 4 (omit when auditNote is omitted)"
     }
   ]
 }
@@ -145,6 +146,10 @@ and reasoning into one blob.
 - **`auditNote` — only when something is wrong.** The opinionated health/cost
   judgment, drawn from the fixed taxonomy below. **Omit it when the rule is
   healthy.** Forcing a note onto every rule manufactures fake problems.
+- **`auditCategory` — whenever `auditNote` is present.** The taxonomy row's name
+  verbatim from the left column below, nothing invented. The UI renders it as
+  the flag tag on the card, which is what makes an unhealthy rule findable while
+  scrolling; without it the card still flags, just with the generic word.
 
 | Audit category | Fires when |
 |----------------|-----------|
