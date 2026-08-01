@@ -29,6 +29,12 @@ It deliberately checks the categories that capable models skip on their own
 (brittle rules, misfiled entries), and it refuses to rubber-stamp or to invent
 staleness on healthy rules.
 
+Where rule sources live in git, the audit pins each contributing repo's commit
+(`meta.commits` in rules.json, shown in the UI header and embedded in both
+exports) so decisions that come back days later can be checked for drift. Where
+they don't, it says so — and warns at the apply gate that drops from an
+untracked source are unrecoverable.
+
 ## Repo contents
 
 - `SKILL.md` the workflow, the analysis contract, and the disciplines

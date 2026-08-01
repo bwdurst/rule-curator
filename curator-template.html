@@ -128,6 +128,7 @@ function render() {
   document.getElementById('meta').innerHTML =
     '<b>' + escape(DATA.meta.title || 'Rule audit') + '</b>' +
     (DATA.meta.generated ? ' · generated ' + escape(DATA.meta.generated) : '') +
+    (pins().length ? ' · corpus at ' + pins().map(c => '<code>' + escape(pinLabel(c)) + '</code>').join(', ') : '') +
     (DATA.meta.sources && DATA.meta.sources.length
       ? ' · sources: ' + DATA.meta.sources.map(s => '<code>' + escape(s) + '</code>').join(', ')
       : '');
@@ -269,6 +270,16 @@ function persist() {
   localStorage.setItem(datasetKey(), JSON.stringify(DECISIONS));
 }
 
+function pins() {
+  return Array.isArray(DATA && DATA.meta && DATA.meta.commits)
+    ? DATA.meta.commits.filter(c => c && c.hash) : [];
+}
+
+function pinLabel(c) {
+  const state = [c.branch, c.dirty ? 'dirty' : ''].filter(Boolean).join(', ');
+  return (c.root ? c.root + ' @ ' : '') + c.hash + (state ? ' (' + state + ')' : '');
+}
+
 function escape(s) {
   if (s == null) return '';
   return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -302,6 +313,7 @@ document.getElementById('exportJson').addEventListener('click', () => {
 
 document.getElementById('exportMd').addEventListener('click', () => {
   const lines = ['# Rule audit decisions', '_' + (DATA.meta.title || '') + ' — exported ' + new Date().toISOString().slice(0, 10) + '_', ''];
+  if (pins().length) lines.push('Corpus pinned at ' + pins().map(c => '`' + pinLabel(c) + '`').join(', ') + '. Re-verify any rule whose source has changed since.', '');
   for (const verdict of ['drop', 'modify', 'reviewed', 'unreviewed']) {
     const matches = DATA.rules.filter(r => ((DECISIONS[r.id] && DECISIONS[r.id].verdict) || 'unreviewed') === verdict);
     if (!matches.length) continue;

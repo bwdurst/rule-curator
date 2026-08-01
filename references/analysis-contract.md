@@ -56,6 +56,12 @@ changed? Is there a newer rule or ADR that overrides it?
 when an ADR migrated to v2 and v1 returns 410. Note: *superseded by the v2 ADR;
 following this rule writes code that hits a dead endpoint.* You must name the
 thing that supersedes it.
+**With version history:** `git log -1 --format=%ad <rule file>` against the log
+of the file or decision the rule *cites* turns "probably outdated" into a
+documented lead — a rule last touched months before the code it governs was
+rewritten is worth chasing. `git log -S<term>` then finds the commit that
+superseded it; name that commit in the note. Age alone is never the note: a
+rule untouched for a year may simply be correct and stable.
 
 ### Misfiled
 **Test:** Is this in the wrong home or the wrong type? A reusable template stored
@@ -84,6 +90,12 @@ general principle do the job more durably?
 cutting-edge." Note: *hardcoded denylist rots as language drifts; a read-aloud
 "does this sound like marketing?" test generalizes.* Specific is not the same as
 durable; a precise rule can still be brittle.
+**With version history:** churn is the lead, the diffs are the evidence. A rule
+edited repeatedly (`git log --follow`) *may* be one whose hardcoded value keeps
+rotting — but the note must cite what kept changing (the same list, path, or
+count updated again and again), never the edit count. A frequently-edited rule
+may just be an important one under active refinement; churn without a rot
+pattern in the diffs is not an audit note.
 **Also brittle — a sound directive wrapped in rot-prone provenance.** When a
 healthy one-line rule is buried under commit hashes, file:line refs, migration
 numbers, dates, or row counts, the directive is fine but the provenance rots and

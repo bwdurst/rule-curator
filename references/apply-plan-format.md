@@ -17,7 +17,8 @@ The curation UI exports one decision per rule:
 
 ```json
 {
-  "meta": { "title": "...", "exported": "..." },
+  "meta": { "title": "...", "exported": "...",
+            "commits": [ { "root": "~/.claude", "hash": "abc1234", "branch": "main", "dirty": false } ] },
   "decisions": [
     { "id": "G1", "source": "path:line", "verdict": "drop",
       "original": "...", "modifiedText": "", "notes": "" }
@@ -51,6 +52,16 @@ created; leave unrelated nearby structure alone.
 
 Compute every edit against the **current** contents of the source files at apply
 time, not against the snapshot captured during curation.
+
+Where `meta.commits` carries pins, resolve them first — per pinned repo,
+`git log --oneline <hash>..HEAD -- <sources>` names committed drift and
+`git status --porcelain -- <sources>` names uncommitted drift. Only a file
+absent from **both** is unchanged; `git log` alone is not enough, because
+uncommitted edits never appear in it. Any file dirty now, or belonging to a pin
+recorded `dirty: true`, gets the textual `original` comparison below instead —
+the commit range proves nothing about content that was never committed. The
+textual comparison is also the fallback when pins are absent or a source is
+untracked.
 
 - **Drifted rule:** the rule text in the file no longer matches `original`. The
   file changed since curation. Flag it, skip it, do not blind-edit.
@@ -90,17 +101,27 @@ review it as a diff:
 ## Skipped (M)
 - D4 (drifted: file text no longer matches the curated original)
 
+## Sources without history
+- memory/ is not version-controlled — the drops above are unrecoverable once applied.
+
 ## Not reviewed (K) — kept unchanged
 - 12 rules were left unreviewed and remain as-is.
 ```
 
+Omit the "Sources without history" section when every touched source is
+tracked; when present, it must name each untracked source that a drop or modify
+touches.
+
 ## The apply gate and execution
 
-Present the plan, then ask once: "apply these N edits?" On confirmation, make the
-edits exactly as listed. Where the sources live in a git repo, recommend
-committing or stashing first so the apply lands as one reviewable diff. This is a
-lightweight confirm-then-edit; it does not need a multi-checkpoint execution
-framework.
+Present the plan, then ask once: "apply these N edits?" **If any touched source
+is untracked, the gate line says so before asking** ("these sources have no
+version history — drops are unrecoverable"), and recommending `git init` on the
+rule directory afterward is usually the highest-value follow-up. On
+confirmation, make the edits exactly as listed. Where the sources live in a git
+repo, recommend committing or stashing first so the apply lands as one
+reviewable diff. This is a lightweight confirm-then-edit; it does not need a
+multi-checkpoint execution framework.
 
 Running unattended, do **not** auto-apply: writing back to source-of-truth rule
 files is the one place the skill always stops for a human.

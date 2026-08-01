@@ -38,7 +38,7 @@ Copy this checklist and track progress:
 
 ```
 Rule Curator progress:
-- [ ] 1. Discover rule sources (+ enumerate installed skills and ADRs)
+- [ ] 1. Discover rule sources (+ enumerate installed skills and ADRs; pin each repo's commit)
 - [ ] 2. SCOPE GATE: confirm/narrow/expand sources + emphasis (default: all, full)
 - [ ] 3. Extract rules into rules.json
 - [ ] 4. Analyze each rule against the whole corpus (impact + conditional audit note)
@@ -78,9 +78,31 @@ so "duplicates a skill / duplicates an ADR" findings are grounded, not guessed.
 PRDs and feature specs are excluded by default; a user may add sources at the
 scope gate. If nothing is found, report and stop. Never fabricate a rule set.
 
+**Search wider than the repo before declaring anything missing.** Rule sources,
+and the trackers they cite, often sit *above* the project root or outside it
+entirely (`~/.claude/`, a parent directory, a sibling checkout). A repo-scoped
+search returning nothing is not evidence a file is absent. Widen the search
+before writing "does not exist" into an audit note, and record the resolved
+absolute path so the next reader does not repeat the hunt. An unqualified
+filename in a rule is itself a finding — flag it Brittle and qualify it.
+
+**Pin the corpus.** A corpus routinely spans more than one repo — the global
+`~/.claude` config and the project repo are usually two — plus files under no
+repo at all, so one commit cannot pin it. For every distinct repo that
+contributes sources, record a pin (`git rev-parse --short HEAD`, branch,
+dirty-tree state) and carry the list as `meta.commits` in rules.json. The UI
+header displays the pins and both exports embed them, so a `decisions.json`
+that comes back days later can be checked against the trees it was computed
+from. Rule files outside any repo (a memory directory, an untracked global
+config) have no pin — say so in `meta.sources` rather than implying the whole
+corpus is pinned.
+
 ### 2. Scope gate (required, defaults to proceed)
 
-Present the discovered sources and a rough rule count. Offer to confirm, narrow,
+Present the discovered sources and a rough rule count, tagging each source
+tracked or untracked — an untracked source has no history, so a drop there is
+unrecoverable, and the human should know that before curating, not after.
+Offer to confirm, narrow,
 or expand the source set, and optionally to focus ("general health audit" vs
 "hunting duplicates / staleness / bloat"). **If the user just says go: all
 sources, full audit.** Running unattended: take that default.
@@ -91,7 +113,9 @@ Normalize each rule into the schema `build_curator.py` consumes:
 
 ```json
 {
-  "meta": { "title": "...", "generated": "YYYY-MM-DD", "sources": ["..."] },
+  "meta": { "title": "...", "generated": "YYYY-MM-DD",
+            "commits": [ { "root": "~/.claude", "hash": "abc1234", "branch": "main", "dirty": false } ],
+            "sources": ["..."] },
   "categories": [ { "id": "global-claudemd", "label": "Global · CLAUDE.md", "color": "#c0392b" } ],
   "rules": [
     {
@@ -137,6 +161,17 @@ Stale) get found on their own; **Brittle and Misfiled are the ones routinely
 missed**, so check them explicitly. Redundancy, Conflicts, and Supersession are
 only visible across the corpus, so analyze with all rules and the skill/ADR list
 in view, never each rule in isolation.
+
+**Use version history as evidence where it exists.** History turns two
+categories from judgment into fact: for **Stale / superseded**, `git log -S`
+finds the superseding commit — exactly the evidence the no-invented-staleness
+discipline demands you name; for **Brittle**, repeated edits to the same
+hardcoded list, path, or count document the rot. Either way the note cites what
+changed, never the bare count: history is corroboration, not the finding, and
+age alone (or churn alone) is not an audit note. Where sources are untracked,
+say so rather than silently applying a weaker standard to half the corpus.
+Command-level detail and the guards live in the Stale and Brittle sections of
+the analysis contract.
 
 **Full rubric, category tests, and worked good/bad examples:** see
 [references/analysis-contract.md](references/analysis-contract.md).
@@ -191,6 +226,23 @@ and emit an auditable apply-plan. Then confirm once ("apply these N edits?") and
 execute. Per-verdict edits, drift handling, and the plan format: see
 [references/apply-plan-format.md](references/apply-plan-format.md).
 
+Where sources are pinned, `meta.commits` makes drift detection a lookup instead
+of a diff — but only for files clean at both ends. Per pinned repo,
+`git log --oneline <hash>..HEAD -- <sources>` names committed drift and
+`git status --porcelain -- <sources>` names uncommitted drift; only a file
+absent from **both** is unchanged. Any file dirty now, or belonging to a pin
+recorded `dirty`, gets the textual comparison instead — the commit range proves
+nothing about content that was never committed. Curation happens on human time
+— hours or days — so drift is the normal case, not the edge case.
+
+**If the corpus is not version-controlled, say so before applying.** Dropping a
+rule is destructive and unrecoverable without history; a memory entry deleted
+from an untracked directory is simply gone. One sentence at the apply gate is
+enough ("these sources have no version history — drops are unrecoverable"), and
+recommending `git init` on the rule directory afterward is usually the highest-
+value follow-up this skill can leave behind: the next audit gets to see what
+changed and whether the last pruning held.
+
 ## Disciplines (hold these)
 
 **No rubber-stamping.** The default failure is "good rule, keep it." Every rule
@@ -209,6 +261,8 @@ current rule to look thorough. A healthy rule gets no audit note.
 - You praised a rule's specificity without checking if its list/date/path will rot (Brittle).
 - You judged a memory entry's content but not whether its *type* fits (Misfiled).
 - You called something stale without naming what supersedes it.
+- You wrote "does not exist" into an audit note after only a repo-scoped search.
+- You treated a rule's age — or its churn — as an audit note without naming a superseding change or the value that kept rotting.
 - You fused "what it does" and "what's wrong with it" into one verdict blob.
 - You marked a work-status entry (ship log / phase tracker) as a standing rule and kept it whole, instead of extracting its buried directive and archiving the log.
 - You reported the checkpoint as counts only, without checking whether the flagged rules share a cross-cutting pattern (3+ recurrence) the per-rule notes fragment.
@@ -219,3 +273,6 @@ current rule to look thorough. A healthy rule gets no audit note.
 - **Skipping the skill/ADR enumeration**, then guessing at duplication.
 - **Treating PRDs as rule sources** and flooding the audit with feature requirements.
 - **Writing back blind.** Recompute the apply-plan against current files; skip rules whose text drifted since curation.
+- **Concluding a cited file is missing from a repo-scoped search.** Trackers and rule sources routinely live above the project root; widen before you write it down.
+- **Applying drops to an untracked corpus without saying so.** The human should know a drop is unrecoverable before they approve it, not after.
+- **Declaring "no drift" from a commit-range lookup alone.** Uncommitted edits never appear in `git log`; check `git status` too, and textual-compare dirty files.
