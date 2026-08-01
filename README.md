@@ -58,6 +58,12 @@ git clone https://github.com/bwdurst/rule-curator.git ~/.claude/skills/rule-cura
 (or copy the folder there manually). Once installed, invoke it by asking to
 audit, prune, or clean up your rules, or run `/rule-curator`.
 
+**Before your first audit:** put your rule sources under version control if
+they aren't already — a `git init` in your memory directory is enough. Tracked
+sources get pinned audits, exact drift detection, and revertable drops;
+untracked sources get a warning at the apply gate that drops are unrecoverable,
+which is a worse time to find out.
+
 ## Build the curation UI directly
 
 You can also run the build step yourself once you have a `rules.json`:
