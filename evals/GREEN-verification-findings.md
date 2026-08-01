@@ -150,3 +150,13 @@ CSO guidance (a workflow summary in the description becomes a shortcut Claude
 follows instead of reading the body). Kept the trigger keywords and the NOT-for
 boundary. Discovery re-checked on a weak model: "clean up my whole rule set"
 selects rule-curator; "reword just this one rule" correctly selects none.
+
+## Addendum 2026-08-01 — version-history cases added, not yet run
+
+The skill gained version-history guidance (per-repo pins in `meta.commits`,
+history-as-evidence for Stale/Brittle, dirty-aware drift, untracked-source
+warnings; upstream 687a457). Eval cases H1–H6 and the deterministic
+history-wrapped corpus (`evals/make_history.py`) exist but have NOT been run on
+either arm. Until both RED and GREEN runs cover them — on the same models as
+the recorded baselines, or after a deliberate full re-baseline — the
+version-history discipline is untested by this apparatus.

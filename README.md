@@ -42,7 +42,9 @@ untracked source are unrecoverable.
 - `references/apply-plan-format.md` the apply-plan shape and per-verdict edit rules
 - `build_curator.py` standard-library script that builds the self-contained UI
 - `curator-template.html` the UI template (data is injected at build time)
-- `evals/` the planted-issue test corpus, answer key, and RED/GREEN findings
+- `evals/` the planted-issue test corpus, answer key, and RED/GREEN findings;
+  `evals/make_history.py` wraps the corpus in a deterministic git history for
+  the version-history cases (H1–H6, not yet run)
 - `docs/specs/` the design spec
 
 ## Install
